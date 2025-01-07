@@ -94,7 +94,7 @@ class HttpResponse {
     public HttpResponse(String status, Headers headers, byte[] body) {
         this.status = status;
         this.headers = headers;
-
+        this.body = body;
     }
 
 
@@ -163,7 +163,6 @@ class Response {
 
         if (body != null) {
             if (request.useGzip()) {
-                System.err.println("Gzip requested");
                 ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
                 try (GZIPOutputStream gzipOutputStream = new GZIPOutputStream(byteArrayOutputStream)) {
                     gzipOutputStream.write(body);
