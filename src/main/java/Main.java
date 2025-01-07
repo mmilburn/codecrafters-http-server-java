@@ -169,8 +169,15 @@ class Response {
             } else if (!(request.getPath().isEmpty() || request.getPath().equals("/"))) {
                 builder.setStatus(404);
             }
-        } else if ("POST".equals(request.getMethod())) {
-            builder.setStatus(201);
+        } else if ("POST".equals(request.getMethod()) && request.getPath().startsWith("/files/")) {
+            Path filePath = directoryPath.resolve(request.getPath().substring(7).trim());
+            try {
+                Files.write(filePath, request.getBody());
+                builder.setStatus(201);
+            } catch (IOException ioNo) {
+                System.err.println(ioNo.getMessage());
+                builder.setStatus(500);
+            }
         } else {
             builder.setStatus(501);
         }
@@ -182,7 +189,7 @@ class Response {
                     gzipOutputStream.write(body);
                 } catch (IOException ioNo) {
                     System.err.println(ioNo.getMessage());
-                    builder.setStatus(501);
+                    builder.setStatus(500);
                 }
                 body = byteArrayOutputStream.toByteArray(); // Example compression
                 responseHeaders.setContentEncodingGzip();
@@ -338,7 +345,7 @@ class SimpleWebServer {
             byte[] buffer = new byte[8192];
             int read = clientSocket.getInputStream().read(buffer);
             if (read > 0) {
-                HttpRequest request = new HttpRequest(buffer);
+                HttpRequest request = new HttpRequest(Arrays.copyOfRange(buffer, 0, read));
                 Response response = new Response(directoryPath, request);
 
                 clientSocket.getOutputStream().write(response.toBytes());
