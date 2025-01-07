@@ -94,29 +94,7 @@ class HttpResponse {
     public HttpResponse(String status, Headers headers, byte[] body) {
         this.status = status;
         this.headers = headers;
-        if (body != null) {
-            if (headers.isContentEncodingGzip()) {
-                ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(body);
-                try (GZIPInputStream gzipInputStream = new GZIPInputStream(byteArrayInputStream);
-                     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
 
-                    // Read decompressed data
-                    byte[] buffer = new byte[8192];
-                    int bytesRead;
-                    while ((bytesRead = gzipInputStream.read(buffer)) != -1) {
-                        byteArrayOutputStream.write(buffer, 0, bytesRead);
-                    }
-                    this.body = buffer;
-                } catch (IOException ioNo) {
-                    System.err.println(ioNo.getMessage());
-                    this.body = null;
-                }
-            } else {
-                this.body = body;
-            }
-        } else {
-            this.body = null;
-        }
     }
 
 
