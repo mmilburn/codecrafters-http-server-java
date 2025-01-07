@@ -1,6 +1,8 @@
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -12,6 +14,8 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 class Headers {
 
@@ -85,18 +89,35 @@ class HttpResponse {
 
     private final String status;
     private final Headers headers;
-    private final byte[] body;
+    private byte[] body;
 
-    public HttpResponse(String status, Headers headers, String body) {
+    public HttpResponse(String status, Headers headers, byte[] body) {
         this.status = status;
         this.headers = headers;
         if (body != null) {
-            this.body = headers.isContentEncodingGzip() ?
-                    body.getBytes() : body.getBytes(StandardCharsets.UTF_8);
+            if (headers.isContentEncodingGzip()) {
+                ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(body);
+                try (GZIPInputStream gzipInputStream = new GZIPInputStream(byteArrayInputStream);
+                     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
+
+                    // Read decompressed data
+                    byte[] buffer = new byte[1024];
+                    int bytesRead;
+                    while ((bytesRead = gzipInputStream.read(buffer)) != -1) {
+                        byteArrayOutputStream.write(buffer, 0, bytesRead);
+                    }
+                } catch (IOException ioNo) {
+                    System.err.println(ioNo.getMessage());
+                    this.body = null;
+                }
+            } else {
+                this.body = body;
+            }
         } else {
             this.body = null;
         }
     }
+
 
     public byte[] toBytes() {
         StringBuilder response = new StringBuilder();
@@ -125,21 +146,20 @@ class Response {
     public Response(Path directoryPath, HttpRequest request) {
         this.builder = new HttpResponseBuilder().setStatus(200);
         Headers responseHeaders = new Headers().setContentType("text/plain");
-        String body = null;
+        byte[] body = null;
 
         if ("GET".equals(request.getMethod())) {
             if (request.getPath().startsWith("/echo/")) {
-                body = request.getPath().substring(6).trim();
+                body = request.getPath().substring(6).trim().getBytes(StandardCharsets.UTF_8);
             } else if (request.getPath().startsWith("/user-agent")) {
-                body = request.getUserAgent();
+                body = request.getUserAgent().getBytes(StandardCharsets.UTF_8);
             } else if (request.getPath().startsWith("/files/")) {
                 Path filePath = directoryPath.resolve(request.getPath().substring(7).trim());
                 if (Files.exists(filePath)) {
                     try {
-                        byte[] file = Files.readAllBytes(filePath);
-                        body = new String(file, StandardCharsets.UTF_8);
-                    }
-                    catch (IOException ioNo) {
+                        body = Files.readAllBytes(filePath);
+                        responseHeaders.setContentType("application/octet-stream");
+                    } catch (IOException ioNo) {
                         System.err.println(ioNo.getMessage());
                         builder.setStatus(500);
                     }
@@ -157,7 +177,14 @@ class Response {
 
         if (body != null) {
             if (request.useGzip()) {
-                body = "gzipped-body"; // Example compression
+                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                try (GZIPOutputStream gzipOutputStream = new GZIPOutputStream(byteArrayOutputStream)) {
+                    gzipOutputStream.write(body);
+                } catch (IOException ioNo) {
+                    System.err.println(ioNo.getMessage());
+                    builder.setStatus(501);
+                }
+                body = byteArrayOutputStream.toByteArray(); // Example compression
                 responseHeaders.setContentEncodingGzip();
             }
             builder.setBody(body);
@@ -246,14 +273,14 @@ class HttpResponseBuilder {
 
     private String statusLine;
     private Headers headers = new Headers();
-    private String body;
+    private byte[] body;
 
     public HttpResponseBuilder setStatus(int statusCode) {
         this.statusLine = STATUSES.getOrDefault(statusCode, STATUSES.get(501));
         return this;
     }
 
-    public HttpResponseBuilder setBody(String body) {
+    public HttpResponseBuilder setBody(byte[] body) {
         this.body = body;
         return this;
     }
@@ -265,7 +292,7 @@ class HttpResponseBuilder {
 
     public HttpResponse build() {
         if (body != null) {
-            headers.setContentLength(body.length());
+            headers.setContentLength(body.length);
         } else {
             headers.setContentLength(0);
         }
