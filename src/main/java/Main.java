@@ -53,7 +53,7 @@ class Headers {
 
     public boolean isGzipAccepted() {
         Object encoding = headers.get("Accept-Encoding");
-        return encoding instanceof Set && ((Set<?>) encoding).contains("gzip");
+        return encoding instanceof Set ? ((Set<?>) encoding).contains("gzip") : String.valueOf(encoding).equals("gzip");
     }
 
     public Headers setContentLength(int length) {
@@ -101,11 +101,12 @@ class HttpResponse {
                      ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
 
                     // Read decompressed data
-                    byte[] buffer = new byte[1024];
+                    byte[] buffer = new byte[8192];
                     int bytesRead;
                     while ((bytesRead = gzipInputStream.read(buffer)) != -1) {
                         byteArrayOutputStream.write(buffer, 0, bytesRead);
                     }
+                    this.body = buffer;
                 } catch (IOException ioNo) {
                     System.err.println(ioNo.getMessage());
                     this.body = null;
@@ -184,6 +185,7 @@ class Response {
 
         if (body != null) {
             if (request.useGzip()) {
+                System.err.println("Gzip requested");
                 ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
                 try (GZIPOutputStream gzipOutputStream = new GZIPOutputStream(byteArrayOutputStream)) {
                     gzipOutputStream.write(body);
@@ -191,7 +193,7 @@ class Response {
                     System.err.println(ioNo.getMessage());
                     builder.setStatus(500);
                 }
-                body = byteArrayOutputStream.toByteArray(); // Example compression
+                body = byteArrayOutputStream.toByteArray();
                 responseHeaders.setContentEncodingGzip();
             }
             builder.setBody(body);
