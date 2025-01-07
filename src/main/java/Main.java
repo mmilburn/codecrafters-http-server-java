@@ -121,6 +121,7 @@ class HttpResponse {
 
 class Response {
     private final HttpResponseBuilder builder;
+
     public Response(Path directoryPath, HttpRequest request) {
         this.builder = new HttpResponseBuilder().setStatus(200);
         Headers responseHeaders = new Headers().setContentType("text/plain");
@@ -131,8 +132,20 @@ class Response {
                 body = request.getPath().substring(6).trim();
             } else if (request.getPath().startsWith("/user-agent")) {
                 body = request.getUserAgent();
-            } else if (request.getPath().startsWith("/files/")){
-                builder.setStatus(404);
+            } else if (request.getPath().startsWith("/files/")) {
+                Path filePath = directoryPath.resolve(request.getPath().substring(7).trim());
+                if (Files.exists(filePath)) {
+                    try {
+                        byte[] file = Files.readAllBytes(filePath);
+                        body = new String(file, StandardCharsets.UTF_8);
+                    }
+                    catch (IOException ioNo) {
+                        System.err.println(ioNo.getMessage());
+                        builder.setStatus(500);
+                    }
+                } else {
+                    builder.setStatus(404);
+                }
             } else if (!(request.getPath().isEmpty() || request.getPath().equals("/"))) {
                 builder.setStatus(404);
             }
@@ -171,7 +184,6 @@ class HttpRequest {
         List<String> lines = Arrays.asList(new String(data, StandardCharsets.UTF_8).split("\\r\\n"));
 
         String[] requestLine = lines.get(0).split(" ");
-        System.err.println(Arrays.toString(requestLine));
         this.method = requestLine[0].toUpperCase();
         this.path = requestLine[1];
         this.version = requestLine[2];
