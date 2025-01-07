@@ -1,7 +1,6 @@
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -14,7 +13,6 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
-import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 class Headers {
