@@ -1,3 +1,5 @@
+# About the Project
+
 This is a finished Java implementation for the
 ["Build Your Own HTTP server" Challenge](https://app.codecrafters.io/courses/http-server/overview).
 This code implements functionality for all stages (and extensions) of the
