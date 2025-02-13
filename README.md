@@ -1,38 +1,31 @@
-[![progress-banner](https://backend.codecrafters.io/progress/http-server/6dd6e2e1-685c-4b95-a72d-63e7ca9a58a7)](https://app.codecrafters.io/users/codecrafters-bot?r=2qF)
-
-This is a starting point for Java solutions to the
+This is a finished Java implementation for the
 ["Build Your Own HTTP server" Challenge](https://app.codecrafters.io/courses/http-server/overview).
+This code implements functionality for all stages (and extensions) of the
+challenge as of 2025-02-13.
 
-[HTTP](https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol) is the
-protocol that powers the web. In this challenge, you'll build a HTTP/1.1 server
-that is capable of serving multiple clients.
+## What can it do?
 
-Along the way you'll learn about TCP servers,
-[HTTP request syntax](https://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html),
-and more.
+1. Respond to a `GET` request made to `/echo/{string}` with a body of
+   `{string}`.
+2. Respond to a `GET` request made to `/user-agent` with a body containing your
+   user-agent.
+3. Return a file when a `GET` request is made to `/files/{filename}` given the
+   server is started with the command line option `--directory <dir>` and
+   `{filename}` is present in the `<dir>`.
+4. Write a file `{filename}` to `<dir>` when a `POST` request is made to
+   `/files/{filename}` and `--directory <dir>` is provided on the command line.
+5. Respond with a `gzip` encoded body when the client's `Accept-Encoding` header
+   contains `gzip`.
 
-**Note**: If you're viewing this repo on GitHub, head over to
-[codecrafters.io](https://codecrafters.io) to try the challenge.
+# TODO
 
-# Passing the first stage
+- [ ] Refactor code to use more idiomatic Java.
+- [ ] Restructure the project into a codebase that is simple to maintain and
+  extend (demonstrate how I approach _software engineering_ versus just slinging
+  code).
 
-The entry point for your HTTP server implementation is in
-`src/main/java/Main.java`. Study and uncomment the relevant code, and push your
-changes to pass the first stage:
+# Test Run Video
 
-```sh
-git commit -am "pass 1st stage" # any msg
-git push origin master
-```
+A short video of the code being run in the codecrafters test environment:
 
-Time to move on to the next stage!
-
-# Stage 2 & beyond
-
-Note: This section is for stages 2 and beyond.
-
-1. Ensure you have `mvn` installed locally
-1. Run `./your_program.sh` to run your program, which is implemented in
-   `src/main/java/Main.java`.
-1. Commit your changes and run `git push origin master` to submit your solution
-   to CodeCrafters. Test output will be streamed to your terminal.
+https://github.com/user-attachments/assets/05f1a871-79d2-46f6-ad19-012cf1858a7e
